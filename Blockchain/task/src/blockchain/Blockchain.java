@@ -10,8 +10,9 @@ public class Blockchain {
 
     private Blockchain(){}
 
-    public synchronized long[] addBlock(Block newBlock){
-        if((blocks.isEmpty() || newBlock.getPreviousHash().equals(blocks.getLast().getHash()))
+    public synchronized Optional<long[]> addBlock(Block newBlock){
+        if((blocks.isEmpty() ||
+                (newBlock.getPreviousHash().equals(blocks.getLast().getHash()) && newBlock.getId() == blocks.getLast().getId() + 1))
                 && newBlock.getHash().indexOf(prefix) == 0){
             blocks.add(newBlock);
             long[] result = new long[2];
@@ -25,9 +26,9 @@ public class Blockchain {
             }
             result[0] = System.currentTimeMillis() - timeAddLast;
             timeAddLast = System.currentTimeMillis();
-            return result;
+            return Optional.of(result);
         }
-        return null;
+        return Optional.empty();
     }
 
     public LinkedList<Block> getBlocks(){
@@ -38,15 +39,15 @@ public class Blockchain {
         return prefix;
     }
 
-    public static Blockchain getInstance() {
+    public static synchronized Blockchain getInstance() {
         return instance;
     }
 
-    public Block getLastElement(){
+    public synchronized Block getLastElement(){
         return blocks.getLast();
     }
 
-    public int size(){
+    public synchronized int size(){
         return blocks.size();
     }
 
