@@ -57,7 +57,7 @@ public class Block{
     }
 
     private String getString(){
-        return ownerId + blockData.toString() + id + previousHash + magicConstant + timestamp;
+        return ownerId + Arrays.toString(blockData) + id + previousHash + magicConstant + timestamp;
     }
 
     public int getId() {

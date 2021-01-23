@@ -12,7 +12,7 @@ public class Main {
         ExecutorService executor = Executors.newFixedThreadPool(poolSize);
         ExecutorService messenger = Executors.newSingleThreadExecutor();
         messenger.submit(() -> {
-            int i;
+            String name = "Danon";
             StringBuilder builder = new StringBuilder();
             Random random = new Random();
             while (true){

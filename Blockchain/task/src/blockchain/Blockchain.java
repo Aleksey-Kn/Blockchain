@@ -1,12 +1,15 @@
 package blockchain;
 
 import java.util.*;
+import java.util.function.UnaryOperator;
 
 public class Blockchain {
     private final LinkedList<Block> blocks = new LinkedList<>();
     private String prefix = "";
     private static final Blockchain instance = new Blockchain();
     private long timeAddLast = System.currentTimeMillis();
+    private Set<String> users = new HashSet<>();
+    private long oldNum = 0;
 
     private Blockchain(){}
 
@@ -49,6 +52,37 @@ public class Blockchain {
 
     public synchronized int size(){
         return blocks.size();
+    }
+
+    public Optional<UnaryOperator<String>> getOpenKey(String user) {
+        if (users.contains(user)) {
+            return Optional.empty();
+        } else {
+            return Optional.of(data -> {
+                StringBuilder binary = new StringBuilder(data.concat(Long.toString(nextNumber()) + "#").chars()
+                        .mapToObj(Integer::toBinaryString)
+                        .map(i -> "0".repeat(8 - i.length()) + i)
+                        .reduce("", (sum, now) -> sum + now));
+                String[] chars = new String[(int) Math.ceil((float) binary.length() / 8)];
+                for (int i = 0, end; i < chars.length; i++) {
+                    end = Math.min(binary.length(), 6);
+                    chars[i] = binary.substring(0, end);
+                    binary.delete(0, end);
+                }
+                return Arrays.stream(chars)
+                        .map(i -> Integer.parseInt(i, 2))
+                        .map(i -> String.valueOf((char) i.intValue()))
+                        .reduce("", (res, now) -> res + now);
+            });
+        }
+    }
+
+    private long nextNumber(){
+        return (long) (Math.random() * 100 + oldNum);
+    }
+
+    private Optional<String> privateKey(String message){
+        return Optional.empty();
     }
 
     public boolean isRight(){
