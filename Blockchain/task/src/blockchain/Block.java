@@ -1,6 +1,5 @@
 package blockchain;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Random;
@@ -8,7 +7,7 @@ import java.util.Random;
 public class Block{
     private final static LinkedList<String> message = new LinkedList<>();
     private final long ownerId;
-    private String[] blockData;
+    private LinkedList<String> blockData = new LinkedList<>();
     private volatile int id;
     private long timestamp;
     private String previousHash;
@@ -22,15 +21,12 @@ public class Block{
             if(Blockchain.getInstance().size() == 0){
                 id = 1;
                 previousHash = "0";
-                blockData = new String[]{"no messages"};
             } else {
                 id = Blockchain.getInstance().getLastElement().getId() + 1;
                 previousHash = Blockchain.getInstance().getLastElement().getHash();
-                if(!message.isEmpty()){
-                    blockData = message.toArray(new String[0]);
+                if(!message.isEmpty()) {
+                    blockData = new LinkedList<>(message);
                     message.clear();
-                } else{
-                    blockData = new String[]{"no messages"};
                 }
             }
             magicConstant = random.nextInt();
@@ -52,27 +48,31 @@ public class Block{
                 "\nMagic number: " + magicConstant +
                 "\nHash of the previous block: \n" + previousHash +
                 "\nHash of the block:\n" + hash +
-                "\nBlock data: " + Arrays.stream(blockData).reduce("", (sum, now) -> sum + "\n" + now);
+                "\nBlock data:";
 
     }
 
     private String getString(){
-        return ownerId + Arrays.toString(blockData) + id + previousHash + magicConstant + timestamp;
+        return ownerId + blockData.toString() + id + previousHash + magicConstant + timestamp;
     }
 
-    public int getId() {
+    int getId() {
         return id;
     }
 
-    public String getHash() {
+    String getHash() {
         return hash;
     }
 
-    public String getPreviousHash() {
+    String getPreviousHash() {
         return previousHash;
     }
 
-    public synchronized static void addMessage(String s){
+    synchronized static void addMessage(String s){
         message.add(s);
+    }
+
+    LinkedList<String> getBlockData() {
+        return blockData;
     }
 }
