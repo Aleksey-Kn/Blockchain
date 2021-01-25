@@ -1,5 +1,6 @@
 package blockchain;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Random;
@@ -7,7 +8,7 @@ import java.util.Random;
 public class Block{
     private final static LinkedList<String> message = new LinkedList<>();
     private final long ownerId;
-    private LinkedList<String> blockData = new LinkedList<>();
+    private String[] blockData;
     private volatile int id;
     private long timestamp;
     private String previousHash;
@@ -25,7 +26,7 @@ public class Block{
                 id = Blockchain.getInstance().getLastElement().getId() + 1;
                 previousHash = Blockchain.getInstance().getLastElement().getHash();
                 if(!message.isEmpty()) {
-                    blockData = new LinkedList<>(message);
+                    blockData = message.toArray(new String[0]);
                     message.clear();
                 }
             }
@@ -53,7 +54,7 @@ public class Block{
     }
 
     private String getString(){
-        return ownerId + blockData.toString() + id + previousHash + magicConstant + timestamp;
+        return ownerId + Arrays.toString(blockData) + id + previousHash + magicConstant + timestamp;
     }
 
     int getId() {
@@ -72,7 +73,7 @@ public class Block{
         message.add(s);
     }
 
-    LinkedList<String> getBlockData() {
+    String[] getBlockData() {
         return blockData;
     }
 }

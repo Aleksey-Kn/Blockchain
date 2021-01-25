@@ -1,6 +1,5 @@
 package blockchain;
 
-import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,12 +15,12 @@ public class Main {
             String name = "Danon";
             StringBuilder builder = new StringBuilder();
             Random random = new Random();
-            UnaryOperator<String> publicKey = Blockchain.getInstance().getOpenKey(name).get();
+            UnaryOperator<String> publicKey = Blockchain.getInstance().getOpenKey(name);
             while (true){
                 while (random.nextInt() % 20 != 0) {
                     builder.append((char)('a' + random.nextInt(23)));
                 }
-                Block.addMessage(publicKey.apply(name) + ":" + builder.toString());
+                Block.addMessage(publicKey.apply(name+ ":" + builder.toString()));
                 builder = new StringBuilder();
                 Thread.sleep(500);
             }
