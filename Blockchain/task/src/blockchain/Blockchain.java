@@ -5,12 +5,12 @@ import java.util.function.UnaryOperator;
 
 public class Blockchain {
     private final LinkedList<Block> blocks = new LinkedList<>();
+    private final LinkedList<String> message = new LinkedList<>();
     private String prefix = "";
     private static final Blockchain instance = new Blockchain();
     private long timeAddLast = System.currentTimeMillis();
-    private long oldNum = 0;
-    private long lastContinueNum = 0;
-    private long oldLastNum = 0;
+    private long oldNum = 0; // for openKey
+    private final long[] oldLastNum = new long[3];
     private final LinkedList<long[]> dataTime = new LinkedList<>();
 
     private Blockchain() {
@@ -21,20 +21,28 @@ public class Blockchain {
                 (newBlock.getPreviousHash().equals(blocks.getLast().getHash()) && newBlock.getId() == blocks.getLast().getId() + 1))
                 && newBlock.getHash().indexOf(prefix) == 0) {
             String[] list = newBlock.getBlockData();
-            if (list != null && list.length > 0) {
+            if (list != null) {
                 for (String s : list) {
-                    if(privateKey(s, true, false).isEmpty()){
-                        return;
+                    if (s != null && !trueMessage(s, false)) {
+                        list = null;
                     }
+                }
+                if (list == null) {
+                    for(String s: newBlock.getBlockData()){
+                        if(trueMessage(s, false)){
+                            message.add(s);
+                        }
+                    }
+                    return;
                 }
             }
             blocks.add(newBlock);
             long[] result = new long[2];
-            if (System.currentTimeMillis() - timeAddLast < 5000) {
+            if (System.currentTimeMillis() - timeAddLast < 150) {
                 prefix = prefix.concat("0");
                 result[1] = prefix.length();
             }
-            if (System.currentTimeMillis() - timeAddLast > 60000 && !prefix.isEmpty()) {
+            if (System.currentTimeMillis() - timeAddLast > 1000 && !prefix.isEmpty()) {
                 prefix = prefix.substring(1);
                 result[1] = -1;
             }
@@ -44,11 +52,7 @@ public class Blockchain {
         }
     }
 
-    public LinkedList<Block> getBlocks() {
-        return blocks;
-    }
-
-    public void print(int count) {
+    public synchronized void print(int count) {
         Iterator<long[]> itTime = dataTime.iterator();
         Iterator<Block> itBlocks = blocks.iterator();
         long[] now;
@@ -57,20 +61,22 @@ public class Blockchain {
             now = itTime.next();
             nowBlock = itBlocks.next();
             System.out.println(nowBlock.toString());
-            if (nowBlock.getBlockData() != null) {
-                if (nowBlock.getBlockData().length == 0) {
-                    System.out.println("no message");
-                } else {
-                    Arrays.stream(nowBlock.getBlockData()).forEach(l -> {
-                        System.out.println(privateKey(l, false, false).get());
-                    });
-                }
+            if (nowBlock.getBlockData() == null) {
+                System.out.println("no message");
+            } else {
+                Arrays.stream(nowBlock.getBlockData()).forEach(l -> {
+                    System.out.println(privateKey(l, false, 2).get());
+                });
             }
             System.out.printf("Block was generating for %d seconds\n", now[0] / 1000);
             System.out.println(now[1] == 0 ? "N stays the same" : (now[1] < 0 ? "N was decreased by 1" :
                     "N was increased to " + now[1]));
             System.out.println();
         }
+    }
+
+    public LinkedList<String> getMessage() {
+        return message;
     }
 
     public String getPrefix() {
@@ -89,7 +95,45 @@ public class Blockchain {
         return blocks.size();
     }
 
-    public UnaryOperator<String> getOpenKey(String user) {
+    public synchronized void addMessage(String code) {
+        if (trueMessage(code, true)) {
+            message.add(code);
+        }
+    }
+
+    private boolean trueMessage(String message, boolean newMessage) {
+        Optional<String> decodingMessage = privateKey(message, true, (newMessage ? 0 : 1));
+        if(decodingMessage.isPresent()) {
+            return transaction(decodingMessage.get(), newMessage);
+        }
+        return false;
+    }
+
+    private synchronized boolean transaction(String decodingMessage, boolean newMessage) {
+        if (isRight() || newMessage) {
+            String[] nowData = decodingMessage.split(" ");
+            String owner = nowData[0];
+            String[] nowStr;
+            long money = 100;
+            money += blocks.parallelStream().filter(i -> i.getOwnerId().equals(nowData[0])).count() * 100;
+            for(Block block: blocks){
+                if(block.getBlockData() != null) {
+                    for (String s : block.getBlockData()) {
+                        nowStr = privateKey(s, false, 2).get().split(" ");
+                        if (nowStr[0].equals(owner)) {
+                            money -= Integer.parseInt(nowStr[2]);
+                        } else if (nowStr[5].equals(owner)) {
+                            money += Integer.parseInt(nowStr[2]);
+                        }
+                    }
+                }
+            }
+            return money >= Integer.parseInt(nowData[2]);
+        }
+        return false;
+    }
+
+    public UnaryOperator<String> getOpenKey() {
         return data -> {
             StringBuilder binary = new StringBuilder(data.concat("#" + nextNumber()).chars()
                     .mapToObj(Integer::toBinaryString)
@@ -120,7 +164,7 @@ public class Blockchain {
         return oldNum;
     }
 
-    private Optional<String> privateKey(String message, boolean check, boolean old) {
+    private Optional<String> privateKey(String message, boolean check, int indOfVal) {
         StringBuilder binary = new StringBuilder(message.chars()
                 .mapToObj(Integer::toBinaryString)
                 .map(i -> "0".repeat(6 - i.length()) + i)
@@ -137,14 +181,10 @@ public class Blockchain {
                 .reduce("", (res, now) -> res + now).split("#");
         if (check) {
             int nowNum = Integer.parseInt(data[1].trim());
-            if (nowNum <= (old ? oldLastNum : lastContinueNum)) {
+            if (nowNum <= oldLastNum[indOfVal]) {
                 return Optional.empty();
             } else {
-                if (old) {
-                    oldLastNum = nowNum;
-                } else {
-                    lastContinueNum = nowNum;
-                }
+                oldLastNum[indOfVal] = nowNum;
                 return Optional.of(data[0]);
             }
         } else {
@@ -156,12 +196,14 @@ public class Blockchain {
         if (blocks.size() < 2) {
             return true;
         } else {
-            oldLastNum = 0;
+            oldLastNum[2] = 0;
             for (Block b : blocks) {
-                for (String s : b.getBlockData()) {
-                    Optional<String> opt = privateKey(s, true, true);
-                    if (opt.isEmpty()) {
-                        return false;
+                if(b.getBlockData() != null) {
+                    for (String s : b.getBlockData()) {
+                        Optional<String> opt = privateKey(s, true, 2);
+                        if (opt.isEmpty()) {
+                            return false;
+                        }
                     }
                 }
             }

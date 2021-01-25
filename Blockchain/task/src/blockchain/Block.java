@@ -2,12 +2,10 @@ package blockchain;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.Random;
 
 public class Block{
-    private final static LinkedList<String> message = new LinkedList<>();
-    private final long ownerId;
+    private final String ownerId;
     private String[] blockData;
     private volatile int id;
     private long timestamp;
@@ -15,7 +13,7 @@ public class Block{
     private int magicConstant;
     private String hash;
 
-    public Block(long owner){
+    public Block(String owner){
         ownerId = owner;
         Random random = new Random();
         do {
@@ -25,9 +23,9 @@ public class Block{
             } else {
                 id = Blockchain.getInstance().getLastElement().getId() + 1;
                 previousHash = Blockchain.getInstance().getLastElement().getHash();
-                if(!message.isEmpty()) {
-                    blockData = message.toArray(new String[0]);
-                    message.clear();
+                if(!Blockchain.getInstance().getMessage().isEmpty()) {
+                    blockData = Blockchain.getInstance().getMessage().toArray(new String[0]);
+                    Blockchain.getInstance().getMessage().clear();
                 }
             }
             magicConstant = random.nextInt();
@@ -43,7 +41,8 @@ public class Block{
     @Override
     public String toString() {
         return "Block:" +
-                "\nCreated by miner # " + ownerId +
+                "\nCreated by: " + ownerId +
+                "\n" + ownerId + "gets 100 VC" +
                 "\nId: " + id +
                 "\nTimestamp: " + timestamp +
                 "\nMagic number: " + magicConstant +
@@ -61,6 +60,10 @@ public class Block{
         return id;
     }
 
+    public String getOwnerId() {
+        return ownerId;
+    }
+
     String getHash() {
         return hash;
     }
@@ -69,11 +72,11 @@ public class Block{
         return previousHash;
     }
 
-    synchronized static void addMessage(String s){
-        message.add(s);
-    }
-
     String[] getBlockData() {
         return blockData;
+    }
+
+    public static String createMessage(String in, int money, String out){
+        return String.format("%s sent %d VC to %s", in, money, out);
     }
 }

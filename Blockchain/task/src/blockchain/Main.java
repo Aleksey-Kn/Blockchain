@@ -8,37 +8,36 @@ import java.util.function.UnaryOperator;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        final int poolSize = Runtime.getRuntime().availableProcessors();
+        final int poolSize = 5;
         ExecutorService executor = Executors.newFixedThreadPool(poolSize);
-        ExecutorService messenger = Executors.newSingleThreadExecutor();
-        messenger.submit(() -> {
-            String name = "Danon";
-            StringBuilder builder = new StringBuilder();
-            Random random = new Random();
-            UnaryOperator<String> publicKey = Blockchain.getInstance().getOpenKey(name);
-            while (true){
-                while (random.nextInt() % 20 != 0) {
-                    builder.append((char)('a' + random.nextInt(23)));
+        ExecutorService messenger = Executors.newFixedThreadPool(poolSize);
+        for (int i = 0; i < poolSize; i++) {
+            String finalI = String.valueOf(i);
+            messenger.submit(() -> {
+                Random random = new Random();
+                UnaryOperator<String> publicKey = Blockchain.getInstance().getOpenKey();
+                while (true) {
+                    Blockchain.getInstance().addMessage(publicKey.apply(
+                            Block.createMessage(finalI, random.nextInt(200), Integer.toString(random.nextInt(poolSize))))
+                    );
+                    Thread.sleep(500);
                 }
-                Block.addMessage(publicKey.apply(name+ ":" + builder.toString()));
-                builder = new StringBuilder();
-                Thread.sleep(500);
-            }
-        });
-        for(int i = 0; i < poolSize; i++) {
-            int finalI = i;
+            });
+        }
+        for (int i = 0; i < poolSize; i++) {
+            String finalI = String.valueOf(i);
             executor.submit(() -> {
                 try {
-                    while (Blockchain.getInstance().size() < 5) {
+                    while (Blockchain.getInstance().size() < 15) {
                         Blockchain.getInstance().addBlock(new Block(finalI));
                     }
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
         }
         executor.awaitTermination(14, TimeUnit.SECONDS);
-        Blockchain.getInstance().print(5);
+        Blockchain.getInstance().print(15);
         messenger.shutdownNow();
     }
 }
