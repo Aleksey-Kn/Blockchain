@@ -37,7 +37,6 @@ public class Main {
             });
         }
         executor.awaitTermination(14, TimeUnit.SECONDS);
-        Blockchain.getInstance().print(15);
         messenger.shutdownNow();
     }
 }

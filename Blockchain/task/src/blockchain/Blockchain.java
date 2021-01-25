@@ -12,6 +12,7 @@ public class Blockchain {
     private long oldNum = 0; // for openKey
     private final long[] oldLastNum = new long[3];
     private final LinkedList<long[]> dataTime = new LinkedList<>();
+    private boolean needOutput = true;
 
     private Blockchain() {
     }
@@ -49,6 +50,25 @@ public class Blockchain {
             result[0] = System.currentTimeMillis() - timeAddLast;
             timeAddLast = System.currentTimeMillis();
             dataTime.add(result);
+            if(needOutput) {
+                System.out.println(newBlock.toString());
+                if (newBlock.getBlockData() == null) {
+                    System.out.println("no message");
+                } else {
+                    Arrays.stream(newBlock.getBlockData()).forEach(l -> {
+                        if (l != null) {
+                            System.out.println(privateKey(l, false, 2).get());
+                        }
+                    });
+                }
+                System.out.printf("Block was generating for %d seconds\n", result[0] / 1000);
+                System.out.println(result[1] == 0 ? "N stays the same" : (result[1] < 0 ? "N was decreased by 1" :
+                        "N was increased to " + result[1]));
+                System.out.println();
+                if(blocks.size() >= Integer.MAX_VALUE){
+                    needOutput = false;
+                }
+            }
         }
     }
 
@@ -75,7 +95,7 @@ public class Blockchain {
         }
     }
 
-    public LinkedList<String> getMessage() {
+    public synchronized LinkedList<String> getMessage() {
         return message;
     }
 
@@ -119,11 +139,13 @@ public class Blockchain {
             for(Block block: blocks){
                 if(block.getBlockData() != null) {
                     for (String s : block.getBlockData()) {
-                        nowStr = privateKey(s, false, 2).get().split(" ");
-                        if (nowStr[0].equals(owner)) {
-                            money -= Integer.parseInt(nowStr[2]);
-                        } else if (nowStr[5].equals(owner)) {
-                            money += Integer.parseInt(nowStr[2]);
+                        if(s != null) {
+                            nowStr = privateKey(s, false, 2).get().split(" ");
+                            if (nowStr[0].equals(owner)) {
+                                money -= Integer.parseInt(nowStr[2]);
+                            } else if (nowStr[5].equals(owner)) {
+                                money += Integer.parseInt(nowStr[2]);
+                            }
                         }
                     }
                 }
@@ -200,9 +222,11 @@ public class Blockchain {
             for (Block b : blocks) {
                 if(b.getBlockData() != null) {
                     for (String s : b.getBlockData()) {
-                        Optional<String> opt = privateKey(s, true, 2);
-                        if (opt.isEmpty()) {
-                            return false;
+                        if(s != null) {
+                            Optional<String> opt = privateKey(s, true, 2);
+                            if (opt.isEmpty()) {
+                                return false;
+                            }
                         }
                     }
                 }
