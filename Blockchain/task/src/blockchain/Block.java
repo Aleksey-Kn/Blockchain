@@ -42,7 +42,7 @@ public class Block{
     public String toString() {
         return "Block:" +
                 "\nCreated by: " + ownerId +
-                "\n" + ownerId + "gets 100 VC" +
+                "\n" + ownerId + " gets 100 VC" +
                 "\nId: " + id +
                 "\nTimestamp: " + timestamp +
                 "\nMagic number: " + magicConstant +

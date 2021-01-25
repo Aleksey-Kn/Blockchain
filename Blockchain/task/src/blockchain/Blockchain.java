@@ -39,11 +39,11 @@ public class Blockchain {
             }
             blocks.add(newBlock);
             long[] result = new long[2];
-            if (System.currentTimeMillis() - timeAddLast < 150) {
+            if (System.currentTimeMillis() - timeAddLast < 200) {
                 prefix = prefix.concat("0");
                 result[1] = prefix.length();
             }
-            if (System.currentTimeMillis() - timeAddLast > 1000 && !prefix.isEmpty()) {
+            if (System.currentTimeMillis() - timeAddLast > 1500 && !prefix.isEmpty()) {
                 prefix = prefix.substring(1);
                 result[1] = -1;
             }
@@ -65,7 +65,7 @@ public class Blockchain {
                 System.out.println(result[1] == 0 ? "N stays the same" : (result[1] < 0 ? "N was decreased by 1" :
                         "N was increased to " + result[1]));
                 System.out.println();
-                if(blocks.size() >= Integer.MAX_VALUE){
+                if(blocks.size() >= 12){
                     needOutput = false;
                 }
             }
