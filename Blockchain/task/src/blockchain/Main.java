@@ -18,7 +18,7 @@ public class Main {
                 UnaryOperator<String> publicKey = Blockchain.getInstance().getOpenKey();
                 while (true) {
                     Blockchain.getInstance().addMessage(publicKey.apply(
-                            Block.createMessage(finalI, random.nextInt(500), Integer.toString(random.nextInt(poolSize))))
+                            Block.createMessage(finalI, random.nextInt(300), Integer.toString(random.nextInt(poolSize))))
                     );
                     Thread.sleep(100);
                 }

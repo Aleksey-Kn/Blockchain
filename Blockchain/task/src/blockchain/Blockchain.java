@@ -39,11 +39,11 @@ public class Blockchain {
             }
             blocks.add(newBlock);
             long[] result = new long[2];
-            if (System.currentTimeMillis() - timeAddLast < 200) {
+            if (System.currentTimeMillis() - timeAddLast < 2000) {
                 prefix = prefix.concat("0");
                 result[1] = prefix.length();
             }
-            if (System.currentTimeMillis() - timeAddLast > 1500 && !prefix.isEmpty()) {
+            if (System.currentTimeMillis() - timeAddLast > 10000 && !prefix.isEmpty()) {
                 prefix = prefix.substring(1);
                 result[1] = -1;
             }
@@ -65,7 +65,7 @@ public class Blockchain {
                 System.out.println(result[1] == 0 ? "N stays the same" : (result[1] < 0 ? "N was decreased by 1" :
                         "N was increased to " + result[1]));
                 System.out.println();
-                if(blocks.size() >= 12){
+                if(blocks.size() >= 7){
                     needOutput = false;
                 }
             }
@@ -143,7 +143,8 @@ public class Blockchain {
                             nowStr = privateKey(s, false, 2).get().split(" ");
                             if (nowStr[0].equals(owner)) {
                                 money -= Integer.parseInt(nowStr[2]);
-                            } else if (nowStr[5].equals(owner)) {
+                            }
+                            if (nowStr[5].equals(owner)) {
                                 money += Integer.parseInt(nowStr[2]);
                             }
                         }
